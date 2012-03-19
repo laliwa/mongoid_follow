@@ -4,7 +4,7 @@ module Mongoid
 
     included do |base|
       base.field    :fferc, :type => Integer, :default => 0
-      base.has_many :followers, :class_name => 'Follow', :as => :follower, :dependent => :destroy
+      base.has_many :followers, :class_name => 'Follow', :as => :followee, :dependent => :destroy
     end
 
     # know if self is followed by model
@@ -13,7 +13,7 @@ module Mongoid
     # => @clyde.follower?(@bonnie)
     # => true
     def follower?(model)
-      0 < self.followers.find(:all, conditions: {ff_id: model.id}).limit(1).count
+      0 < self.followers.find(:all, conditions: {follower_id: model.id}).limit(1).count
     end
 
     # get followers count
@@ -32,7 +32,7 @@ module Mongoid
     # => @bonnie.followers_count_by_model(User)
     # => 1
     def followers_count_by_model(model)
-      self.followers.where(:ff_type => model.to_s).count
+      self.followers.where(:follower_type => model.to_s).count
     end
 
     # view all selfs followers
@@ -67,10 +67,10 @@ module Mongoid
 
     private
     def get_followers_of(me, model = nil)
-      followers = !model ? me.followers : me.followers.where(:ff_type => model.to_s)
+      followers = !model ? me.followers : me.followers.where(:follower_type => model.to_s)
 
       followers.collect do |f|
-        f.ff_type.constantize.find(f.ff_id)
+        f.follower
       end
     end
 

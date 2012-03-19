@@ -4,7 +4,7 @@ module Mongoid
 
     included do |base|
       base.field    :ffeec, :type => Integer, :default => 0
-      base.has_many :followees, :class_name => 'Follow', :as => :followee, :dependent => :destroy
+      base.has_many :followees, :class_name => 'Follow', :as => :follower, :dependent => :destroy
     end
 
     # follow a model
@@ -15,12 +15,10 @@ module Mongoid
       if self.id != model.id && !self.follows?(model)
 
         model.before_followed_by(self) if model.respond_to?('before_followed_by')
-        model.followers.create!(:ff_type => self.class.name, :ff_id => self.id)
+        self.before_follow(model) if self.respond_to?('before_follow')
+        model.followers.create!(:follower_type => self.class.name, :follower_id => self.id)
         model.inc(:fferc, 1)
         model.after_followed_by(self) if model.respond_to?('after_followed_by')
-
-        self.before_follow(model) if self.respond_to?('before_follow')
-        self.followees.create!(:ff_type => model.class.name, :ff_id => model.id)
         self.inc(:ffeec, 1)
         self.after_follow(model) if self.respond_to?('after_follow')
 
@@ -37,12 +35,10 @@ module Mongoid
       if self.id != model.id && self.follows?(model)
 
         model.before_unfollowed_by(self) if model.respond_to?('before_unfollowed_by')
-        model.followers.where(:ff_type => self.class.name, :ff_id => self.id).destroy
+        self.before_unfollow(model) if self.respond_to?('before_unfollow')
+        model.followers.where(:follower_type => self.class.name, :follower_id => self.id).destroy
         model.inc(:fferc, -1)
         model.after_unfollowed_by(self) if model.respond_to?('after_unfollowed_by')
-
-        self.before_unfollow(model) if self.respond_to?('before_unfollow')
-        self.followees.where(:ff_type => model.class.name, :ff_id => model.id).destroy
         self.inc(:ffeec, -1)
         self.after_unfollow(model) if self.respond_to?('after_unfollow')
 
@@ -57,7 +53,7 @@ module Mongoid
     # => @bonnie.follows?(@clyde)
     # => true
     def follows?(model)
-      0 < self.followees.find(:all, conditions: {ff_id: model.id}).limit(1).count
+      0 < self.followees.find(:all, conditions: {followee_id: model.id}).limit(1).count
     end
 
     # get followees count
@@ -76,7 +72,7 @@ module Mongoid
     # => @bonnie.followees_count_by_model(User)
     # => 1
     def followees_count_by_model(model)
-      self.followees.where(:ff_type => model.to_s).count
+      self.followees.where(:followee_type => model.to_s).count
     end
 
     # view all selfs followees
@@ -111,10 +107,10 @@ module Mongoid
 
     private
     def get_followees_of(me, model = nil)
-      followees = !model ? me.followees : me.followees.where(:ff_type => model.to_s)
+      followees = !model ? me.followees : me.followees.where(:follower_type => model.to_s)
 
       followees.collect do |f|
-        f.ff_type.constantize.find(f.ff_id)
+        f.followee
       end
     end
 
