@@ -53,18 +53,6 @@ module Mongoid
       get_followers_of(self, model)
     end
 
-    # view all common followers of self against model
-    #
-    # Example:
-    # => @clyde.common_followers_with(@gang)
-    # => [@bonnie, @alec]
-    def common_followers_with(model)
-      model_followers = get_followers_of(model)
-      self_followers = get_followers_of(self)
-
-      self_followers & model_followers
-    end
-
     private
     def get_followers_of(me, model = nil)
       followers = !model ? me.followers : me.followers.where(:follower_type => model.to_s)

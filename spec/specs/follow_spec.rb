@@ -169,29 +169,6 @@ describe Mongoid::Follower do
         @bonnie.all_user_followees.should == [@clyde]
       end
 
-      it "should have common followers" do
-        @bonnie.follow(@clyde)
-        @bonnie.follow(@gang)
-
-        @gang.common_followers_with(@clyde).should == [@bonnie]
-
-        @alec.follow(@clyde)
-        @alec.follow(@gang)
-
-        @clyde.common_followers_with(@gang).should == [@bonnie, @alec]
-      end
-
-      it "should have common followees" do
-        @bonnie.follow(@gang)
-        @alec.follow(@gang)
-
-        @alec.common_followees_with(@bonnie).should == [@gang]
-
-        @bonnie.follow(@clyde)
-        @alec.follow(@clyde)
-
-        @bonnie.common_followees_with(@alec).should == [@gang, @clyde]
-      end
     end
 
     describe "callback stuff" do
